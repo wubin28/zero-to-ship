@@ -3,7 +3,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="text-center">
         <h1 className="text-6xl font-bold text-blue-600 mb-8">
-          Hello World!
+          你好，世界!
         </h1>
         <p className="text-xl text-gray-600">
           欢迎来到我的第一个Next.js网站
