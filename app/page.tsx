@@ -72,8 +72,8 @@ export default function Home() {
     
     setIsOptimizing(true)
     
-    const prefix = "你是专家"
-    const suffix = "请提供主要观点的3个不同出处的网页链接以便我查验。如果你不知道或查不到，就实说，不要编造"
+    const prefix = "你是专家。"
+    const suffix = "。请为你提供的每个主要观点分别给出3个不同出处的网页链接以便我查验。如果你不知道或查不到，就实说，不要编造"
     const optimizedText = `${prefix}${inputText}${suffix}`
     
     setTimeout(() => {
