@@ -6,8 +6,11 @@ export default function Home() {
   const [inputText, setInputText] = useState('')
   const [optimizedTexts, setOptimizedTexts] = useState<string[]>([])
   const [isOptimizing, setIsOptimizing] = useState(false)
+  const [isSmartOptimizing, setIsSmartOptimizing] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [optimizationType, setOptimizationType] = useState<'basic' | 'smart'>('basic')
   const resultsContainerRef = useRef<HTMLDivElement>(null)
 
   const copyToClipboard = async (text: string, index: number) => {
@@ -20,7 +23,51 @@ export default function Home() {
     }
   }
 
-  const handleOptimize = () => {
+  const showError = (message: string) => {
+    setError(message)
+    setTimeout(() => setError(null), 10000)
+  }
+
+  const handleSmartOptimize = async () => {
+    if (!inputText.trim()) return
+    
+    setIsSmartOptimizing(true)
+    setError(null)
+    
+    try {
+      const response = await fetch('/api/deepseek-optimize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: inputText }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || '智能优化失败')
+      }
+
+      if (data.success && data.optimizedText) {
+        setOptimizedTexts(prev => [data.optimizedText, ...prev])
+        setInputText('')
+      } else {
+        throw new Error('优化结果格式异常')
+      }
+    } catch (err) {
+      console.error('智能优化错误:', err)
+      const errorMessage = err instanceof Error ? err.message : '智能优化失败，请重试'
+      showError(errorMessage)
+      
+      // 智能优化失败时回退到基础优化
+      handleBasicOptimize()
+    } finally {
+      setIsSmartOptimizing(false)
+    }
+  }
+
+  const handleBasicOptimize = () => {
     if (!inputText.trim()) return
     
     setIsOptimizing(true)
@@ -36,6 +83,14 @@ export default function Home() {
     }, 300)
   }
 
+  const handleOptimize = () => {
+    if (optimizationType === 'smart') {
+      handleSmartOptimize()
+    } else {
+      handleBasicOptimize()
+    }
+  }
+
   useEffect(() => {
     if (optimizedTexts.length > 0 && resultsContainerRef.current) {
       resultsContainerRef.current.scrollTop = 0
@@ -45,6 +100,20 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
+        {/* 错误提示 */}
+        {error && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md">
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg animate-fade-in">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium">{error}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 主标题 */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-4xl md:text-6xl font-bold text-orange-600 mb-4">
@@ -125,6 +194,45 @@ export default function Home() {
 
         {/* 输入区域 */}
         <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+          {/* 优化类型选择器 */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-orange-700 mb-3">优化模式：</label>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setOptimizationType('basic')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  optimizationType === 'basic'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                }`}
+              >
+                <span className="flex items-center">
+                  <span className="mr-2">⚡</span>
+                  基础优化
+                </span>
+              </button>
+              <button
+                onClick={() => setOptimizationType('smart')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  optimizationType === 'smart'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                }`}
+              >
+                <span className="flex items-center">
+                  <span className="mr-2">🤖</span>
+                  智能优化
+                </span>
+              </button>
+            </div>
+            <p className="mt-2 text-sm text-orange-500">
+              {optimizationType === 'basic' 
+                ? '快速基础优化，添加标准提示词前缀和后缀'
+                : '使用 DeepSeek AI 进行智能优化，提升表达的专业性和流畅性'
+              }
+            </p>
+          </div>
+
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
             {/* 文本输入框 */}
             <div className="flex-1">
@@ -145,27 +253,27 @@ export default function Home() {
             <div className="flex items-center justify-center md:justify-start">
               <button
                 onClick={handleOptimize}
-                disabled={!inputText.trim() || isOptimizing}
+                disabled={!inputText.trim() || isOptimizing || isSmartOptimizing}
                 className={`px-8 py-4 text-white font-semibold rounded-lg shadow-md transition-all duration-200 transform min-w-[120px] flex items-center justify-center ${
-                  isOptimizing 
+                  isOptimizing || isSmartOptimizing
                     ? 'bg-orange-400 cursor-not-allowed' 
                     : !inputText.trim() 
                     ? 'bg-orange-300 cursor-not-allowed' 
                     : 'bg-orange-500 hover:bg-orange-600 hover:scale-105 active:scale-95'
                 }`}
               >
-                {isOptimizing ? (
+                {isOptimizing || isSmartOptimizing ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    优化中...
+                    {isSmartOptimizing ? '智能优化中...' : '优化中...'}
                   </>
                 ) : (
                   <>
-                    <span className="mr-2">✨</span>
-                    减幻优化
+                    <span className="mr-2">{optimizationType === 'smart' ? '🤖' : '✨'}</span>
+                    {optimizationType === 'smart' ? '智能优化' : '减幻优化'}
                   </>
                 )}
               </button>
