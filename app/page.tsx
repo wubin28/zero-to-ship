@@ -35,52 +35,129 @@ export default function Home() {
     setError(null)
     
     try {
+      // 1. 基础优化预处理阶段
+      let baseOptimizedText = inputText
+      
+      // 修复人称表述：将第一人称转换为第二人称
+      baseOptimizedText = baseOptimizedText
+        .replace(/我将为您/g, '请你为我')
+        .replace(/我将为你/g, '请你为我')
+        .replace(/我将为您们/g, '请你为你们')
+        .replace(/我将为你们/g, '请你为你们')
+        .replace(/我将/g, '请你')
+        .replace(/我/g, '你')
+      
+      // 添加专业身份前缀（根据内容动态调整）
+      let prefix = "你是专业的"
+      if (baseOptimizedText.includes('电影')) {
+        prefix = "你是专业的电影推荐专家，"
+      } else if (baseOptimizedText.includes('学习') || baseOptimizedText.includes('教育')) {
+        prefix = "你是专业的教育专家，"
+      } else if (baseOptimizedText.includes('健康') || baseOptimizedText.includes('医疗')) {
+        prefix = "你是专业的健康顾问，"
+      } else if (baseOptimizedText.includes('技术') || baseOptimizedText.includes('编程')) {
+        prefix = "你是专业的技术专家，"
+      } else if (baseOptimizedText.includes('旅游') || baseOptimizedText.includes('旅行')) {
+        prefix = "你是专业的旅游顾问，"
+      } else {
+        prefix = "你是专业的领域专家，"
+      }
+      
+      // 确保语句以句号结束
+      if (!baseOptimizedText.endsWith('。') && !baseOptimizedText.endsWith('！') && !baseOptimizedText.endsWith('？')) {
+        baseOptimizedText += '。'
+      }
+      
+      const preOptimizedText = `${prefix}${baseOptimizedText}`
+      
+      // 2. DeepSeek API智能优化阶段
       const response = await fetch('/api/deepseek-optimize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text: inputText }),
+        body: JSON.stringify({ text: preOptimizedText }),
       })
 
       const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || '智能优化失败')
-      }
+      let finalOptimizedText = preOptimizedText // 默认使用基础优化结果
 
-      if (data.success && data.optimizedText) {
-        setOptimizedTexts(prev => [data.optimizedText, ...prev])
-        setInputText('')
-      } else {
-        throw new Error('优化结果格式异常')
+      if (response.ok && data.success && data.optimizedText) {
+        // API调用成功，使用智能优化结果
+        finalOptimizedText = data.optimizedText
       }
+      
+      // 3. 后缀强制添加阶段（无论API调用成功与否都执行）
+      const suffix = "请为你给出的每个主要观点分别提供3个不同出处的网页链接以便我查验。如果你不知道或查不到，就实说，不要编造"
+      finalOptimizedText = `${finalOptimizedText}${suffix}`
+      
+      setOptimizedTexts(prev => [finalOptimizedText, ...prev])
+      setInputText('')
+      
     } catch (err) {
       console.error('智能优化错误:', err)
       const errorMessage = err instanceof Error ? err.message : '智能优化失败，请重试'
       showError(errorMessage)
       
-      // 智能优化失败时回退到基础优化
-      handleBasicOptimize()
+      // 智能优化失败时回退到基础优化（包含后缀）
+      handleBasicOptimizeWithSuffix()
     } finally {
       setIsSmartOptimizing(false)
     }
   }
 
-  const handleBasicOptimize = () => {
+  const handleBasicOptimizeWithSuffix = () => {
     if (!inputText.trim()) return
     
     setIsOptimizing(true)
     
-    const prefix = "你是专家。"
-    const suffix = "。请为你提供的每个主要观点分别给出3个不同出处的网页链接以便我查验。如果你不知道或查不到，就实说，不要编造"
-    const optimizedText = `${prefix}${inputText}${suffix}`
+    // 基础优化预处理：修复人称表述和格式
+    let baseOptimizedText = inputText
+    
+    // 修复人称表述：将第一人称转换为第二人称
+    baseOptimizedText = baseOptimizedText
+      .replace(/我将为您/g, '请你为我')
+      .replace(/我将为你/g, '请你为我')
+      .replace(/我将为您们/g, '请你为你们')
+      .replace(/我将为你们/g, '请你为你们')
+      .replace(/我将/g, '请你')
+      .replace(/我/g, '你')
+    
+    // 添加专业身份前缀（根据内容动态调整）
+    let prefix = "你是专业的"
+    if (baseOptimizedText.includes('电影')) {
+      prefix = "你是专业的电影推荐专家，"
+    } else if (baseOptimizedText.includes('学习') || baseOptimizedText.includes('教育')) {
+      prefix = "你是专业的教育专家，"
+    } else if (baseOptimizedText.includes('健康') || baseOptimizedText.includes('医疗')) {
+      prefix = "你是专业的健康顾问，"
+    } else if (baseOptimizedText.includes('技术') || baseOptimizedText.includes('编程')) {
+      prefix = "你是专业的技术专家，"
+    } else if (baseOptimizedText.includes('旅游') || baseOptimizedText.includes('旅行')) {
+      prefix = "你是专业的旅游顾问，"
+    } else {
+      prefix = "你是专业的领域专家，"
+    }
+    
+    // 确保语句以句号结束
+    if (!baseOptimizedText.endsWith('。') && !baseOptimizedText.endsWith('！') && !baseOptimizedText.endsWith('？')) {
+      baseOptimizedText += '。'
+    }
+    
+    // 构建基础优化结果（包含后缀）
+    const suffix = "请为你给出的每个主要观点分别提供3个不同出处的网页链接以便我查验。如果你不知道或查不到，就实说，不要编造"
+    const optimizedText = `${prefix}${baseOptimizedText}${suffix}`
     
     setTimeout(() => {
       setOptimizedTexts(prev => [optimizedText, ...prev])
       setInputText('')
       setIsOptimizing(false)
     }, 300)
+  }
+
+  const handleBasicOptimize = () => {
+    handleBasicOptimizeWithSuffix()
   }
 
   const handleOptimize = () => {

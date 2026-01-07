@@ -54,11 +54,12 @@ export async function POST(request: NextRequest) {
                 role: 'system',
                 content: `你是一个专业的文本优化专家。请对用户提供的提示词进行智能优化，具体要求如下：
 
-1. 根据提示词内容，将通用表述"你是专家"动态替换为相应领域的专业身份
-2. 对语句进行流畅性优化，提升文本表达的自然度和专业性
-3. 修正文本中的标点符号使用错误，确保符合标准中文标点规范
-4. 保持原意的完整性，不要添加额外信息
-5. 优化后的文本应该更加专业、流畅、易于理解
+1. 用户输入已经过基础优化处理，包含专业身份前缀和基本格式修正
+2. 请在此基础上进行进一步的智能优化，提升文本的专业性和流畅度
+3. 确保优化后的文本保持第二人称指令格式（如"请你为我"）
+4. 修正文本中的语法和标点符号错误
+5. 保持原意的完整性，不要添加额外信息
+6. 优化后的文本应该更加专业、自然、易于理解
 
 请直接返回优化后的文本，不要添加任何解释或额外内容。`
               },
@@ -108,22 +109,27 @@ export async function POST(request: NextRequest) {
     
     if (lastError) {
       if (typeof lastError === 'object' && 'status' in lastError) {
-        statusCode = lastError.status
+        const errorWithStatus = lastError as { status: number; errorData?: string }
+        statusCode = errorWithStatus.status
         
-        if (lastError.status === 401) {
+        if (errorWithStatus.status === 401) {
           errorMessage = 'API key 无效或已过期，请检查并更新 API key'
-        } else if (lastError.status === 429) {
+        } else if (errorWithStatus.status === 429) {
           errorMessage = '请求频率过高，请稍后重试'
-        } else if (lastError.status >= 500) {
+        } else if (errorWithStatus.status >= 500) {
           errorMessage = 'DeepSeek 服务器内部错误，请稍后重试'
         } else {
-          try {
-            const errorData = JSON.parse(lastError.errorData)
-            if (errorData.error && errorData.error.message) {
-              errorMessage = `DeepSeek API 错误: ${errorData.error.message}`
+          if (errorWithStatus.errorData) {
+            try {
+              const errorData = JSON.parse(errorWithStatus.errorData)
+              if (errorData.error && errorData.error.message) {
+                errorMessage = `DeepSeek API 错误: ${errorData.error.message}`
+              }
+            } catch {
+              errorMessage = `API 调用失败 (状态码: ${errorWithStatus.status})`
             }
-          } catch {
-            errorMessage = `API 调用失败 (状态码: ${lastError.status})`
+          } else {
+            errorMessage = `API 调用失败 (状态码: ${errorWithStatus.status})`
           }
         }
       } else if (lastError instanceof Error) {
