@@ -6,7 +6,19 @@ export default function Home() {
   const [inputText, setInputText] = useState('')
   const [optimizedTexts, setOptimizedTexts] = useState<string[]>([])
   const [isOptimizing, setIsOptimizing] = useState(false)
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const resultsContainerRef = useRef<HTMLDivElement>(null)
+
+  const copyToClipboard = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedIndex(index)
+      setTimeout(() => setCopiedIndex(null), 2000)
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+  }
 
   const handleOptimize = () => {
     if (!inputText.trim()) return
@@ -60,7 +72,9 @@ export default function Home() {
               {optimizedTexts.map((text, index) => (
                 <div 
                   key={index}
-                  className="bg-white rounded-lg shadow-md p-4 md:p-6 border-l-4 border-orange-500 animate-fade-in hover:shadow-lg transition-shadow duration-200"
+                  className="relative bg-white rounded-lg shadow-md p-4 md:p-6 border-l-4 border-orange-500 animate-fade-in hover:shadow-lg transition-shadow duration-200 group"
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
                 >
                   <div className="flex items-start mb-2">
                     <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full mr-2">
@@ -70,7 +84,39 @@ export default function Home() {
                       {new Date().toLocaleTimeString()}
                     </span>
                   </div>
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{text}</p>
+                  
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap pr-10">{text}</p>
+                  
+                  {/* 复制按钮 - 桌面端悬停显示，移动端始终显示 */}
+                  <div className={`absolute bottom-3 right-3 transition-all duration-200 ${
+                    hoveredIndex === index ? 'md:opacity-100 md:translate-y-0' : 'md:opacity-0 md:translate-y-2'
+                  } md:group-hover:opacity-100 md:group-hover:translate-y-0 opacity-100 translate-y-0`}>
+                    <button
+                      onClick={() => copyToClipboard(text, index)}
+                      className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        copiedIndex === index 
+                          ? 'bg-green-500 text-white shadow-lg scale-105' 
+                          : 'bg-orange-100 text-orange-600 hover:bg-orange-200 hover:shadow-md'
+                      }`}
+                      title="复制到剪贴板"
+                    >
+                      {copiedIndex === index ? (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="hidden md:inline">已复制</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          <span className="hidden md:inline">复制</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
