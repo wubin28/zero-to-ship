@@ -1,5 +1,18 @@
 // DeepSeek API 测试脚本
-const apiKey = process.env.DEEPSEEK_API_KEY || 'your_api_key_here'
+const fs = require('fs');
+const path = require('path');
+
+// 读取 .env.local 文件
+let apiKey = 'your_api_key_here';
+try {
+  const envFile = fs.readFileSync(path.join(__dirname, '.env.local'), 'utf8');
+  const match = envFile.match(/DEEPSEEK_API_KEY=(.+)/);
+  if (match && match[1]) {
+    apiKey = match[1].trim();
+  }
+} catch (error) {
+  console.log('⚠️  无法读取 .env.local 文件，使用默认值');
+}
 
 async function testDeepSeekAPI() {
   console.log('🔍 测试 DeepSeek API 连接...')
