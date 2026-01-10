@@ -92,7 +92,7 @@ export default function Home() {
       const suffix = "请为你给出的每个主要观点分别提供3个不同出处的网页链接以便我查验。如果你不知道或查不到，就实说，不要编造"
       finalOptimizedText = `${finalOptimizedText}${suffix}`
       
-      setOptimizedTexts(prev => [finalOptimizedText, ...prev])
+      setOptimizedTexts(prev => [...prev, finalOptimizedText])
       setInputText('')
       
     } catch (err) {
@@ -150,7 +150,7 @@ export default function Home() {
     const optimizedText = `${prefix}${baseOptimizedText}${suffix}`
     
     setTimeout(() => {
-      setOptimizedTexts(prev => [optimizedText, ...prev])
+      setOptimizedTexts(prev => [...prev, optimizedText])
       setInputText('')
       setIsOptimizing(false)
     }, 300)
@@ -170,7 +170,7 @@ export default function Home() {
 
   useEffect(() => {
     if (optimizedTexts.length > 0 && resultsContainerRef.current) {
-      resultsContainerRef.current.scrollTop = 0
+      resultsContainerRef.current.scrollTop = resultsContainerRef.current.scrollHeight
     }
   }, [optimizedTexts])
 
@@ -224,7 +224,7 @@ export default function Home() {
                 >
                   <div className="flex items-start mb-2">
                     <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full mr-2">
-                      #{optimizedTexts.length - index}
+                      #{index + 1}
                     </span>
                     <span className="text-xs text-orange-400">
                       {new Date().toLocaleTimeString()}
