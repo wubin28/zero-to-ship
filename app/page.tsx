@@ -60,11 +60,16 @@ export default function Home() {
 
       const data = await response.json()
 
-      let finalOptimizedText = preOptimizedText // 默认使用基础优化结果
+      let finalOptimizedText: string
 
       if (response.ok && data.success && data.optimizedText) {
         // API调用成功，使用智能优化结果
         finalOptimizedText = data.optimizedText
+      } else {
+        // API调用失败，显示错误并回退到基础优化
+        const errorMessage = data.error || 'DeepSeek API 调用失败'
+        showError(`智能优化失败: ${errorMessage}，已回退到基础优化`)
+        finalOptimizedText = preOptimizedText
       }
 
       // 3. 添加RIPER-5模式（无论API调用成功与否都执行）
