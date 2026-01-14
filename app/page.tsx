@@ -112,34 +112,10 @@ export default function Home() {
     
     setIsOptimizing(true)
     
-    // 基础优化预处理：修复人称表述和格式
     let baseOptimizedText = inputText
     
-    // 修复人称表述：将第一人称转换为第二人称
-    baseOptimizedText = baseOptimizedText
-      .replace(/我将为您/g, '请你为我')
-      .replace(/我将为你/g, '请你为我')
-      .replace(/我将为您们/g, '请你为你们')
-      .replace(/我将为你们/g, '请你为你们')
-      .replace(/我将/g, '请你')
-      .replace(/我/g, '你')
-    
-    // 添加专业身份前缀（根据内容动态调整）
-    let prefix = "你是专业的"
-    if (baseOptimizedText.includes('电影')) {
-      prefix = "你是专业的电影推荐专家，"
-    } else if (baseOptimizedText.includes('学习') || baseOptimizedText.includes('教育')) {
-      prefix = "你是专业的教育专家，"
-    } else if (baseOptimizedText.includes('健康') || baseOptimizedText.includes('医疗')) {
-      prefix = "你是专业的健康顾问，"
-    } else if (baseOptimizedText.includes('技术') || baseOptimizedText.includes('编程')) {
-      prefix = "你是专业的技术专家，"
-    } else if (baseOptimizedText.includes('旅游') || baseOptimizedText.includes('旅行')) {
-      prefix = "你是专业的旅游顾问，"
-    } else {
-      prefix = "你是专业的领域专家，"
-    }
-    
+    let prefix = "你是专家，"
+
     // 确保语句以句号结束
     if (!baseOptimizedText.endsWith('。') && !baseOptimizedText.endsWith('！') && !baseOptimizedText.endsWith('？')) {
       baseOptimizedText += '。'
