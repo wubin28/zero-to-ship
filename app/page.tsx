@@ -355,7 +355,7 @@ n. [最终操作]
               >
                 <span className="flex items-center">
                   <span className="mr-2">⚡</span>
-                  查询事实
+                  查询常识
                 </span>
               </button>
               <button
@@ -368,13 +368,13 @@ n. [最终操作]
               >
                 <span className="flex items-center">
                   <span className="mr-2">🤖</span>
-                  未知与复杂
+                  应对未知与复杂
                 </span>
               </button>
             </div>
             <p className="mt-2 text-sm text-orange-500">
               {optimizationType === 'basic' 
-                ? '适用于让AI查询事实，添加标准提示词前缀和后缀'
+                ? '适用于让AI查询常识，添加标准提示词前缀和后缀'
                 : '适用于让AI协助应对未知或复杂问题，使用 DeepSeek API 进行智能优化'
               }
             </p>
@@ -420,7 +420,7 @@ n. [最终操作]
                 ) : (
                   <>
                     <span className="mr-2">{optimizationType === 'smart' ? '🤖' : '✨'}</span>
-                    {optimizationType === 'smart' ? '未知与复杂' : '查询事实'}
+                    {optimizationType === 'smart' ? '应对未知与复杂' : '查询常识'}
                   </>
                 )}
               </button>
