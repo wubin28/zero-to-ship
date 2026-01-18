@@ -290,12 +290,10 @@ n. [最终操作]
 
 [MODE: SPEC-PLAN]
 
-- **目的**：分别为spec-kit的"/speckit.specify"和"/speckit.plan"提供经过澄清的需求和经过确认的技术实现方案
-- **允许**：分别总结之前RESEARCH模式"经过澄清的需求"和INNOVATE模式"经过确认的技术实现方案"
-- **禁止**：任何偏离之前RESEARCH模式和INNOVATE模式经过讨论后确定的内容，以及任何实施或脚本生成编写，即使是"示例内容"
-- **要求**：两份总结都要简明扼要，切记长篇大论
-- **强制最后步骤**：先总结RESEARCH模式"经过澄清的需求"（即spec-kit的SPEC），然后再总结INNOVATE模式"经过确认的技术实现方案"（即spec-kit的PLAN）
-- **清单格式**：
+- **目的**：为 spec-kit 的 '/speckit.specify' 和 '/speckit.plan' 分别提供澄清后的需求和确认后的技术方案
+- **允许**：分别总结 RESEARCH 模式的"澄清后需求"（仅业务需求，即what和why）和 INNOVATE 模式的"确认后技术方案"（仅tech stack）
+- **禁止**：RESEARCH 模式总结中包含tech stack；INNOVATE 模式总结中包含业务需求
+- **要求**：两份总结简明扼要，避免冗长- **清单格式**：
 
 SPEC-PLAN：
 1. [SPEC：RESEARCH模式"经过澄清的需求"]
@@ -587,7 +585,7 @@ SPEC-PLAN：
             提示：按 Ctrl+Enter 快速优化
           </div>
           <div className="mt-4 text-center text-xs text-orange-400">
-            v2026-01-18--15-00
+            v2026-01-18--15-24
           </div>
         </div>
       </div>
