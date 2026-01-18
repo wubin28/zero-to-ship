@@ -7,10 +7,11 @@ export default function Home() {
   const [optimizedTexts, setOptimizedTexts] = useState<string[]>([])
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [isSmartOptimizing, setIsSmartOptimizing] = useState(false)
+  const [isSpecAndPlanOptimizing, setIsSpecAndPlanOptimizing] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [optimizationType, setOptimizationType] = useState<'basic' | 'smart'>('basic')
+  const [optimizationType, setOptimizationType] = useState<'basic' | 'smart' | 'specplan'>('basic')
   const resultsContainerRef = useRef<HTMLDivElement>(null)
 
   const copyToClipboard = async (text: string, index: number) => {
@@ -201,6 +202,143 @@ n. [最终操作]
     }
   }
 
+  const handleSpecAndPlan = async () => {
+    if (!inputText.trim()) return
+    
+    setIsSpecAndPlanOptimizing(true)
+    setError(null)
+    
+    try {
+      // 1. 基础优化预处理阶段
+      let baseOptimizedText = inputText
+            
+      // 添加专业身份前缀（根据内容动态调整）
+      let prefix = "你是专家，"
+      
+      // 确保语句以句号结束
+      if (!baseOptimizedText.endsWith('。') && !baseOptimizedText.endsWith('！') && !baseOptimizedText.endsWith('？')) {
+        baseOptimizedText += '。'
+      }
+      
+      const suffix = "请为你给出的每个主要观点分别提供3个不同出处的网页链接以便我查验。如果你不知道或查不到，就实说，不要编造"
+      const preOptimizedText = `${prefix}${baseOptimizedText}${suffix}`
+      
+      // 2. DeepSeek API智能优化阶段
+      const response = await fetch('/api/deepseek-optimize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: preOptimizedText }),
+      })
+
+      const data = await response.json()
+
+      let finalOptimizedText: string
+
+      if (response.ok && data.success && data.optimizedText) {
+        // API调用成功，使用智能优化结果
+        finalOptimizedText = data.optimizedText
+      } else {
+        // API调用失败，显示错误并回退到基础优化
+        const errorMessage = data.error || 'DeepSeek API 调用失败'
+        showError(`智能优化失败: ${errorMessage}，已回退到基础优化`)
+        finalOptimizedText = preOptimizedText
+      }
+
+      // 3. 添加RI-SP模式（无论API调用成功与否都执行）
+      const riSpMode = `
+请严格按照以下工作流程完成我的诉求：
+【## 背景说明
+
+你是一个AI智能体工具。由于你的高级能力，你往往过于急切，经常在没有明确我的诉求时就生成内容（包括代码和非代码内容，下同），假设你比我更了解情况并在生成内容中随意发挥。这会导致我要求你做的工作出现不可接受的错误。在处理我的诉求时，你未经授权的修改可能会引入错误并破坏关键内容。为了防止这种情况，你必须遵循严格的协议。
+
+## 元指令：模式声明要求
+
+**你必须在每个响应开头用括号声明当前模式，没有例外。**
+**格式：[MODE: 模式名称]**
+**你必须在每个响应结尾明确给出"下一步"提示，让我了解推荐的下一步操作。"下一步"的具体提示信息参见下面各模式的描述。**
+**未能声明模式和下一步是对协议的严重违反。**
+
+## RI-SP 模式
+
+### 模式1：研究
+
+[MODE: RESEARCH]
+
+- **目的**：仅收集信息
+- **允许**：读取文件、提出与我的诉求紧密相关的澄清问题、理解内容结构
+- **禁止**：建议、实施、规划或任何暗示行动
+- **要求**：只能寻求理解现有内容，而非可能的内容
+- **持续时间**：直到我明确指示进入下一模式
+- **下一步**：完整回复后，在末尾给出推荐操作："1. 输入 'ENTER INNOVATE MODE' 进入下一模式 2. 继续澄清需求，可复制：'进入下一模式前，还有疑问吗？'"
+- **输出格式**：以 [MODE: RESEARCH] 开头，然后仅提供观察和问题
+
+### 模式2：创新
+
+[MODE: INNOVATE]
+
+- **目的**：头脑风暴潜在的工作方向
+- **允许**：讨论与我的诉求紧密相关的想法、优缺点，征求我的反馈，并针对我之前提到的顾虑提供推荐方向及理由
+- **禁止**：具体的技术规划、实施细节或任何代码编写
+- **要求**：所有想法必须作为可能性呈现，而非决定
+- **持续时间**：直到我明确指示进入下一模式
+- **下一步**：若已完整回复本模式，需在回复最后给出推荐操作，如："1. 输入 'ENTER PLAN MODE' 进入下一模式 2. 继续讨论可复制：'我没有看到你针对我的诉求提供的建议方向，请根据我的诉求提供推荐方案及理由。'"
+- **输出格式**：以 [MODE: INNOVATE] 开头，然后仅提供可能性和考虑因素
+
+### 模式3：规格-计划
+
+[MODE: SPEC-PLAN]
+
+- **目的**：分别为spec-kit的"/speckit.specify"和"/speckit.plan"提供经过澄清的需求和经过确认的技术实现方案
+- **允许**：分别总结之前RESEARCH模式"经过澄清的需求"和INNOVATE模式"经过确认的技术实现方案"
+- **禁止**：任何偏离之前RESEARCH模式和INNOVATE模式经过讨论后确定的内容，以及任何实施或脚本生成编写，即使是"示例内容"
+- **要求**：两份总结都要简明扼要，切记长篇大论
+- **强制最后步骤**：先总结RESEARCH模式"经过澄清的需求"（即spec-kit的SPEC），然后再总结INNOVATE模式"经过确认的技术实现方案"（即spec-kit的PLAN）
+- **清单格式**：
+
+SPEC-PLAN：
+1. [SPEC：RESEARCH模式"经过澄清的需求"]
+2. [PLAN：INNOVATE模式"经过确认的技术实现方案"]
+
+- **持续时间**：直到我明确批准计划并指示进入下一模式
+- **下一步**：完整回复SPEC-PLAN后，在最后给出推荐操作，如："你已完成一次完整的'RI-SP'提示词优化的工作。此时可重新开启AI会话，进入下一工作过程。"
+- **输出格式**：以 [MODE: SPEC-PLAN] 开头，然后进行简明地总结
+
+## 关键协议指南
+
+1. 未经我的明确许可，不能在模式间转换
+2. 必须在每个响应开头声明当前模式
+3. 没有权限在声明模式外做出独立决策
+4. 未能遵循此协议将导致代码库出现灾难性后果
+
+## 模式转换信号
+
+仅当我明确发出以下信号时才转换模式：
+
+- "ENTER RESEARCH MODE"
+- "ENTER INNOVATE MODE"
+- "ENTER SPEC-PLAN MODE"
+
+没有这些确切信号，保持当前模式。】。
+      `
+      finalOptimizedText = `${finalOptimizedText}${riSpMode}`
+      
+      setOptimizedTexts(prev => [...prev, finalOptimizedText])
+      setInputText('')
+      
+    } catch (err) {
+      console.error('智能优化错误:', err)
+      const errorMessage = err instanceof Error ? err.message : '智能优化失败，请重试'
+      showError(errorMessage)
+      
+      // 智能优化失败时回退到基础优化（包含后缀）
+      handleBasicOptimizeWithSuffix()
+    } finally {
+      setIsSpecAndPlanOptimizing(false)
+    }
+  }
+
   const handleBasicOptimizeWithSuffix = () => {
     if (!inputText.trim()) return
     
@@ -233,6 +371,8 @@ n. [最终操作]
   const handleOptimize = () => {
     if (optimizationType === 'smart') {
       handleSmartOptimize()
+    } else if (optimizationType === 'specplan') {
+      handleSpecAndPlan()
     } else {
       handleBasicOptimize()
     }
@@ -344,7 +484,7 @@ n. [最终操作]
           {/* 优化类型选择器 */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-orange-700 mb-3">优化模式：</label>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-2 md:space-x-4 md:gap-0">
               <button
                 onClick={() => setOptimizationType('basic')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
@@ -371,11 +511,26 @@ n. [最终操作]
                   应对未知与复杂
                 </span>
               </button>
+              <button
+                onClick={() => setOptimizationType('specplan')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  optimizationType === 'specplan'
+                    ? 'bg-orange-500 text-white shadow-md'
+                    : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                }`}
+              >
+                <span className="flex items-center">
+                  <span className="mr-2">📋</span>
+                  Spec&Plan
+                </span>
+              </button>
             </div>
             <p className="mt-2 text-sm text-orange-500">
               {optimizationType === 'basic' 
                 ? '适用于让AI查询常识，添加标准提示词前缀和后缀'
-                : '适用于让AI协助应对未知或复杂问题，使用 DeepSeek API 进行智能优化'
+                : optimizationType === 'smart'
+                ? '适用于让AI协助应对未知或复杂问题，使用 DeepSeek API 进行智能优化'
+                : '适用于在使用spec-kit的"/speckit.specify"和"/speckit.plan"命令之前，与AI共创这两个命令所需的spec和plan'
               }
             </p>
           </div>
@@ -400,27 +555,27 @@ n. [最终操作]
             <div className="flex items-center justify-center md:justify-start">
               <button
                 onClick={handleOptimize}
-                disabled={!inputText.trim() || isOptimizing || isSmartOptimizing}
+                disabled={!inputText.trim() || isOptimizing || isSmartOptimizing || isSpecAndPlanOptimizing}
                 className={`px-8 py-4 text-white font-semibold rounded-lg shadow-md transition-all duration-200 transform min-w-[120px] flex items-center justify-center ${
-                  isOptimizing || isSmartOptimizing
+                  isOptimizing || isSmartOptimizing || isSpecAndPlanOptimizing
                     ? 'bg-orange-400 cursor-not-allowed' 
                     : !inputText.trim() 
                     ? 'bg-orange-300 cursor-not-allowed' 
                     : 'bg-orange-500 hover:bg-orange-600 hover:scale-105 active:scale-95'
                 }`}
               >
-                {isOptimizing || isSmartOptimizing ? (
+                {isOptimizing || isSmartOptimizing || isSpecAndPlanOptimizing ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {isSmartOptimizing ? '智能优化中...' : '优化中...'}
+                    {isSmartOptimizing ? '智能优化中...' : isSpecAndPlanOptimizing ? '智能优化中...' : '优化中...'}
                   </>
                 ) : (
                   <>
-                    <span className="mr-2">{optimizationType === 'smart' ? '🤖' : '✨'}</span>
-                    {optimizationType === 'smart' ? '应对未知与复杂' : '查询常识'}
+                    <span className="mr-2">{optimizationType === 'smart' ? '🤖' : optimizationType === 'specplan' ? '📋' : '✨'}</span>
+                    {optimizationType === 'smart' ? '应对未知与复杂' : optimizationType === 'specplan' ? 'Spec&Plan' : '查询常识'}
                   </>
                 )}
               </button>
@@ -432,7 +587,7 @@ n. [最终操作]
             提示：按 Ctrl+Enter 快速优化
           </div>
           <div className="mt-4 text-center text-xs text-orange-400">
-            v2026-01-18--11-50
+            v2026-01-18--15-00
           </div>
         </div>
       </div>
