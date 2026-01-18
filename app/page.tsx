@@ -431,6 +431,9 @@ n. [最终操作]
           <div className="mt-4 text-center text-sm text-orange-400">
             提示：按 Ctrl+Enter 快速优化
           </div>
+          <div className="mt-4 text-center text-xs text-orange-400">
+            v2026-01-18--11-50
+          </div>
         </div>
       </div>
     </main>
