@@ -493,7 +493,7 @@ SPEC-PLAN：
               >
                 <span className="flex items-center">
                   <span className="mr-2">⚡</span>
-                  查询常识
+                  查询事实
                 </span>
               </button>
               <button
@@ -525,7 +525,7 @@ SPEC-PLAN：
             </div>
             <p className="mt-2 text-sm text-orange-500">
               {optimizationType === 'basic' 
-                ? '适用于让AI查询常识，添加标准提示词前缀和后缀'
+                ? '适用于让AI查询事实，添加标准提示词前缀和后缀'
                 : optimizationType === 'smart'
                 ? '适用于让AI协助应对未知或复杂问题，使用 DeepSeek API 进行智能优化'
                 : '适用于在使用spec-kit的"/speckit.specify"和"/speckit.plan"命令之前，与AI共创这两个命令所需的spec和plan'
@@ -573,7 +573,7 @@ SPEC-PLAN：
                 ) : (
                   <>
                     <span className="mr-2">{optimizationType === 'smart' ? '🤖' : optimizationType === 'specplan' ? '📋' : '✨'}</span>
-                    {optimizationType === 'smart' ? '应对未知与复杂' : optimizationType === 'specplan' ? 'Spec&Plan' : '查询常识'}
+                    {optimizationType === 'smart' ? '应对未知与复杂' : optimizationType === 'specplan' ? 'Spec&Plan' : '查询事实'}
                   </>
                 )}
               </button>
