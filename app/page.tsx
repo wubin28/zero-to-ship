@@ -585,7 +585,7 @@ SPEC-PLAN：
             提示：按 Ctrl+Enter 快速优化
           </div>
           <div className="mt-4 text-center text-xs text-orange-400">
-            v2026-02-13--17-11
+            v2026-03-17--11-27
           </div>
         </div>
       </div>
