@@ -47,7 +47,7 @@ export default function Home() {
         baseOptimizedText += '。'
       }
       
-      const suffix = "请为你给出的每个主要观点分别提供3个不同出处的网页链接以便我查验。如果你不知道或查不到，就实说，不要编造"
+      const suffix = ""
       const preOptimizedText = `${prefix}${baseOptimizedText}${suffix}`
       
       // 2. DeepSeek API智能优化阶段
