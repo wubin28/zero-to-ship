@@ -78,7 +78,7 @@ export default function Home() {
             <button onClick={() => setOptimizationType('basic')} className={`px-4 py-2 rounded-lg font-medium ${!isGrilling ? 'bg-orange-500 text-white shadow-md' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}>⚡ 查询事实</button>
             <button onClick={() => setOptimizationType('assumption-exam-and-grilling')} className={`px-4 py-2 rounded-lg font-medium ${isGrilling ? 'bg-orange-500 text-white shadow-md' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}>🤖 应对未知与复杂</button>
           </div>
-          <p className="mb-6 text-sm text-orange-500">{isGrilling ? '适用于让AI协助应对未知或复杂问题' : '适用于让AI查询事实，添加标准提示词前缀和后缀'}</p>
+          <p className="mb-6 text-sm text-orange-500">{isGrilling ? '生成“假设体检+Grilling”风格提示词以便让AI启发你应对未知或复杂问题。把生成的提示词复制并粘贴给你的AI智能体即可。' : '适用于让AI查询事实。把生成的提示词复制并粘贴给你的AI智能体即可。'}</p>
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
             <textarea value={inputText} onChange={(event) => setInputText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) handleOptimize() }} placeholder="请输入您想要优化的提示词..." className="flex-1 w-full min-h-[120px] md:min-h-[150px] p-4 border border-orange-200 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 resize-y" />
             <button onClick={handleOptimize} disabled={!inputText.trim() || isOptimizing} className={`px-8 py-4 text-white font-semibold rounded-lg shadow-md min-w-[120px] ${isOptimizing || !inputText.trim() ? 'bg-orange-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}>{isOptimizing ? '优化中...' : isGrilling ? '应对未知与复杂' : '查询事实'}</button>
