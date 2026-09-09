@@ -7,6 +7,9 @@ node_modules/
 .next/
 out/
 
+# 本地 Git 工作树
+.worktrees/
+
 # 生产构建文件
 build/
 dist/
