@@ -9,7 +9,7 @@ export default function Home() {
   const [inputText, setInputText] = useState('')
   const [optimizedTexts, setOptimizedTexts] = useState<string[]>([])
   const [isOptimizing, setIsOptimizing] = useState(false)
-  const [optimizationType, setOptimizationType] = useState<OptimizationType>('basic')
+  const [optimizationType, setOptimizationType] = useState<OptimizationType>('assumption-exam-and-grilling')
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const resultsContainerRef = useRef<HTMLDivElement>(null)
 
